@@ -78,3 +78,12 @@ if __name__ == '__main__':
     # Render y Zeabur asignan el puerto automáticamente
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
+
+ydl_opts = {
+    'format': 'bestaudio/best',
+    'quiet': True,
+    'no_warnings': True,
+    'cookiefile': 'cookies.txt',
+    'cachedir': False, # ESTO evita que yt-dlp guarde basura en el disco del servidor
+    # ... resto de tus opciones
+}
