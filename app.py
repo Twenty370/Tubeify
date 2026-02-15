@@ -41,49 +41,39 @@ def buscar():
         print(f"Error en búsqueda: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
-# Reproducción con cookies para evitar bloqueos de bots
 @app.route('/escuchar', methods=['GET'])
 def escuchar():
     id_video = request.args.get('id')
-    
-    # Validamos que el ID no sea nulo para evitar errores de URL truncada
     if not id_video or id_video == "None":
-        return jsonify({"error": "ID de video no válido"}), 400
+        return jsonify({"error": "ID no válido"}), 400
 
     url_yt = f"https://music.youtube.com/watch?v={id_video}"
     
     ydl_opts = {
         'format': 'bestaudio/best',
         'quiet': True,
-        'cookiefile': 'cookies.txt', # Esto usa tu sesión de Chrome para saltar el bot
-        'nocheckcertificate': True,
+        'cookiefile': 'cookies.txt',
+        'cachedir': False,
+        'noplaylist': True,
+        # Cambiamos los clientes para evitar el error de PO Token y Cookies
         'extractor_args': {
             'youtube': {
-                'player_client': ['android', 'ios'], # Simula dispositivos móviles para mayor estabilidad
+                'player_client': ['web', 'mweb', 'tv'], 
                 'player_skip': ['webpage', 'configs'],
             }
+        },
+        'http_headers': {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': '*/*',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Origin': 'https://music.youtube.com',
         }
     }
     
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url_yt, download=False)
-            # Redirigimos al stream de audio directo que ExoPlayer puede reproducir
             return redirect(info['url'])
     except Exception as e:
         print(f"Error en reproducción: {str(e)}")
-        return jsonify({"error": str(e)}), 500
-
-if __name__ == '__main__':
-    # Render y Zeabur asignan el puerto automáticamente
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
-
-ydl_opts = {
-    'format': 'bestaudio/best',
-    'quiet': True,
-    'no_warnings': True,
-    'cookiefile': 'cookies.txt',
-    'cachedir': False, # ESTO evita que yt-dlp guarde basura en el disco del servidor
-    # ... resto de tus opciones
-}
+        return jsonify({"error": "YouTube requiere autenticación adicional. Intenta otra canción."}), 500
